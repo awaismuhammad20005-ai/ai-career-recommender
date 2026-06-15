@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Career Path Recommender | Find Your Ideal Career</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .input-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .match-badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .career-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .career-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+
+        .career-card.selected {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 5px;
+        }
+
+        .learning-step {
+            padding: 10px;
+            margin: 8px 0;
+            background: #f7fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .learning-step.completed {
+            background: #c6f6d5;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .learning-step:hover {
+            background: #edf2f7;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        .progress-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 AI Career Path Recommender</h1>
+            <p>Discover your ideal career path based on your skills and interests</p>
+        </div>
+
+        <div class="input-card">
+            <div class="form-group">
+                <label>💡 Your Skills (comma separated)</label>
+                <textarea id="skills" placeholder="Example: Python, JavaScript, Data Analysis, Communication, Leadership"></textarea>
+            </div>
+            <div class="form-group">
+                <label>❤️ Your Interests</label>
+                <textarea id="interests" placeholder="Example: Building websites, Working with data, Solving problems, Creative design"></textarea>
+            </div>
+            <div class="form-group">
+                <label>📊 Experience Level</label>
+                <select id="experience">
+                    <option value="Beginner">Beginner (0-6 months)</option>
+                    <option value="Intermediate">Intermediate (6-18 months)</option>
+                    <option value="Advanced">Advanced (2+ years)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="getRecommendations()">🔍 Get Career Recommendations</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>🤖 AI is analyzing your profile...</p>
+            <p style="font-size: 12px; color: #666;">Finding the best career matches for you</p>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        let currentUserId = null;
+        let currentCareer = null;
+        let completedSteps = [];
+
+        async function getRecommendations() {
+            const skills = document.getElementById('skills').value;
+            const interests = document.getElementById('interests').value;
+            const experience = document.getElementById('experience').value;
+
+            if (!skills || !interests) {
+                alert('Please enter both skills and interests');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        skills: skills,
+                        interests: interests,
+                        experience: experience
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentUserId = data.user_id;
+                    displayRecommendations(data);
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayRecommendations(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            let recommendationsHtml = '<div class="result-card"><h2>🎯 Top Career Matches</h2><div class="grid-3">';
+            
+            data.recommendations.forEach(rec => {
+                recommendationsHtml += `
+                    <div class="career-card" onclick="selectCareer('${rec.career}')">
+                        <h3>${rec.career}</h3>
+                        <span class="match-badge">Match: ${rec.match_score}</span>
+                        <p style="margin: 10px 0;">${rec.reason}</p>
+                        <p>💰 ${rec.starting_salary}</p>
+                        <p>📈 Demand: ${rec.job_demand}</p>
+                        <p>⏰ ${rec.estimated_time}</p>
+                    </div>
+                `;
+            });
+            
+            recommendationsHtml += '</div></div>';
+            
+            recommendationsHtml += `
+                <div class="result-card" id="careerDetails">
+                    <h2>📖 Career Details</h2>
+                    <p>Select a career above to see detailed learning path</p>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = recommendationsHtml;
+            resultsDiv.style.display = 'block';
+            
+            // Automatically select first career
+            if (data.recommendations.length > 0) {
+                selectCareer(data.recommendations[0].career);
+            }
+        }
+
+        async function selectCareer(careerName) {
+            // Fetch full career details
+            const response = await fetch('/recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    skills: document.getElementById('skills').value,
+                    interests: document.getElementById('interests').value,
+                    experience: document.getElementById('experience').value
+                })
+            });
+            
+            const data = await response.json();
+            const career = data.top_career;
+            currentCareer = career.name;
+            
+            // Load saved progress
+            await loadProgress();
+            
+            const detailsHtml = `
+                <h2>${career.name}</h2>
+                <div class="grid-2">
+                    <div>
+                        <h3>📋 Key Roles</h3>
+                        <ul>${career.roles.map(r => `<li>${r}</li>`).join('')}</ul>
+                        
+                        <h3>💰 Salary Range</h3>
+                        <p>${career.salary_range}</p>
+                        
+                        <h3>📈 Growth Rate</h3>
+                        <p>${career.growth_rate}</p>
+                        
+                        <h3>🔧 Skills Needed</h3>
+                        ${career.details.skills_needed.map(s => `<span class="skill-tag">${s}</span>`).join('')}
+                    </div>
+                    <div>
+                        <h3>Career Path</h3>
+                        <p><strong>Entry:</strong> ${career.details.entry_level}</p>
+                        <p><strong>Mid:</strong> ${career.details.mid_level}</p>
+                        <p><strong>Senior:</strong> ${career.details.senior_level}</p>
+                    </div>
+                </div>
+                
+                <div class="progress-section">
+                    <h3>📊 Your Progress</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                    </div>
+                    <p id="progressMessage"></p>
+                </div>
+                
+                <h3>🎓 Recommended Learning Path</h3>
+                <div id="learningPath">
+                    ${career.learning_path.map((step, index) => `
+                        <div class="learning-step" onclick="toggleStep(${index})" id="step-${index}">
+                            ✅ ${step}
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <h3>📚 Learning Resources</h3>
+                <ul>${data.learning_resources.map(r => `<li>${r}</li>`).join('')}</ul>
+                
+                <h3>🚀 Next Steps</h3>
+                <ul>${data.next_steps.map(s => `<li>${s}</li>`).join('')}</ul>
+            `;
+            
+            document.getElementById('careerDetails').innerHTML = detailsHtml;
+            
+            // Highlight selected career card
+            document.querySelectorAll('.career-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.querySelector('h3').textContent === careerName) {
+                    card.classList.add('selected');
+                }
+            });
+        }
+
+        async function toggleStep(stepIndex) {
+            const stepElement = document.getElementById(`step-${stepIndex}`);
+            
+            if (stepElement.classList.contains('completed')) {
+                stepElement.classList.remove('completed');
+                completedSteps = completedSteps.filter(i => i !== stepIndex);
+            } else {
+                stepElement.classList.add('completed');
+                completedSteps.push(stepIndex);
+            }
+            
+            const progressPercentage = Math.round((completedSteps.length / 7) * 100);
+            document.getElementById('progressFill').style.width = `${progressPercentage}%`;
+            document.getElementById('progressFill').textContent = `${progressPercentage}%`;
+            
+            // Save progress
+            await saveProgress(progressPercentage);
+        }
+
+        async function saveProgress(progressPercentage) {
+            try {
+                const response = await fetch('/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        career_path: currentCareer,
+                        completed_steps: completedSteps,
+                        progress_percentage: progressPercentage
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('progressMessage').textContent = data.message;
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }
+
+        async function loadProgress() {
+            if (!currentUserId || !currentCareer) return;
+            
+            try {
+                const response = await fetch(`/get_progress?user_id=${currentUserId}&career_path=${currentCareer}`);
+                const data = await response.json();
+                
+                if (data.completed_steps) {
+                    completedSteps = data.completed_steps;
+                    const progressPercentage = data.progress_percentage || 0;
+                    
+                    document.getElementById('progressFill').style.width = `${progressPercentage}%`;
+                    document.getElementById('progressFill').textContent = `${progressPercentage}%`;
+                    
+                    completedSteps.forEach(stepIndex => {
+                        const stepElement = document.getElementById(`step-${stepIndex}`);
+                        if (stepElement) stepElement.classList.add('completed');
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading progress:', error);
+            }
+        }
+
+        function showError(message) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="result-card" style="background: #fee2e2; color: #dc2626;">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
